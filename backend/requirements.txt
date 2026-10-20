@@ -1,0 +1,28 @@
+# Project Nexus Backend Dependencies
+
+# FastAPI Framework & Server
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.1
+sse-starlette>=2.0.0
+
+# Dual-Engine Databases
+neo4j>=5.18.0
+chromadb>=0.4.24
+
+# AI & Orchestration
+langchain>=0.1.13
+langchain-core>=0.1.33
+langchain-google-genai>=0.0.11
+
+# AST Parsing (Tree-sitter)
+tree-sitter>=0.21.3
+tree-sitter-python>=0.21.0
+tree-sitter-cpp>=0.21.0
+
+# Testing & Utilities
+pytest>=8.1.0
+pytest-asyncio>=0.23.0
+httpx>=0.27.0
