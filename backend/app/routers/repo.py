@@ -50,3 +50,48 @@ async def stream_ingest_status(session_id: str = Query(..., description="Session
             }
 
     return EventSourceResponse(event_generator())
+
+
+@router.get("/file-content")
+async def get_file_content(
+    file_path: str = Query(..., description="Absolute or repo-relative file path"),
+    start_line: int = Query(None, description="Optional start line (1-indexed)"),
+    end_line: int = Query(None, description="Optional end line (1-indexed)")
+):
+    """Retrieves file source code with line range for CodeDrawer inspection."""
+    target_path = file_path
+    if not os.path.isabs(target_path) and ingestion_manager.current_repo_path:
+        target_path = os.path.join(ingestion_manager.current_repo_path, file_path)
+
+    if not os.path.exists(target_path):
+        # Also check against current working directory or dummy repo
+        alt_path = os.path.abspath(file_path)
+        if os.path.exists(alt_path):
+            target_path = alt_path
+        else:
+            raise HTTPException(status_code=404, detail=f"File '{file_path}' not found on server.")
+
+    try:
+        with open(target_path, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not read file: {e}")
+
+    total_lines = len(lines)
+    s_idx = max(1, start_line) if start_line else 1
+    e_idx = min(total_lines, end_line) if end_line else total_lines
+
+    snippet = "".join(lines[s_idx - 1:e_idx])
+    ext = os.path.splitext(target_path)[1].lower()
+    lang = "python" if ext == ".py" else ("cpp" if ext in [".cpp", ".h", ".hpp", ".cc"] else "plaintext")
+
+    return {
+        "file_path": file_path,
+        "resolved_path": target_path,
+        "start_line": s_idx,
+        "end_line": e_idx,
+        "total_lines": total_lines,
+        "language": lang,
+        "code": snippet
+    }
+
